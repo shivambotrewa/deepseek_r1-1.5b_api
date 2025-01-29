@@ -1,4 +1,4 @@
-name: Run Ollama with LocalTunnel
+name: Run Ollama with Loophole
 
 on:
   workflow_dispatch:  # Manual trigger
@@ -18,9 +18,9 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Install wget
-        run: sudo apt install wget
-  
+      - name: Install dependencies
+        run: sudo apt update && sudo apt install -y wget curl
+
       - name: Install Ollama
         run: |
           curl -fsSL https://ollama.com/install.sh | sh
@@ -37,8 +37,7 @@ jobs:
       - name: Start Ollama
         run: |
           echo "Starting Ollama..."
-          # nohup ollama serve > ollama.log 2>&1 &  # Run Ollama in the background
-          ollama serve &
+          nohup ollama serve > ollama.log 2>&1 &  # Run Ollama in the background
           sleep 10
 
       - name: Pull DeepSeek Model
@@ -46,18 +45,34 @@ jobs:
           echo "Downloading deepseek-r1:1.5b model..."
           ollama run deepseek-r1:1.5b &
 
-      - name: Start LocalTunnel
+      - name: Start Loophole
         run: |
-          echo "Starting LocalTunnel..."
-          curl -o loophole https://raw.githubusercontent.com/NitinBot001/deepseek_r1-1.5b_api/refs/heads/main/loophole
-          # chmod +x loophole
-          ./loophole account login
-          ./loophole http 11434 &
+          echo "Downloading Loophole..."
+          curl -L --output loophole https://raw.githubusercontent.com/NitinBot001/deepseek_r1-1.5b_api/main/loophole
+          
+          echo "Checking file details..."
+          ls -lah loophole  # Ensure file exists
+          file loophole  # Verify file type
+          cat loophole | head -n 10  # Inspect contents
+
+          echo "Setting permissions..."
+          chmod +x loophole || { echo "Failed to set permissions"; exit 1; }
+          
+          echo "Moving loophole to /usr/local/bin..."
+          sudo mv loophole /usr/local/bin/ || { echo "Failed to move loophole to /usr/local/bin"; exit 1; }
+          
+          echo "Verifying loophole is in PATH..."
+          which loophole || { echo "Loophole not found in PATH"; exit 1; }
+
+          echo "Running Loophole..."
+          /usr/local/bin/loophole http 11434 &
+
           echo "Waiting for tunnel URL..."
-          sleep 30  # Ensure localtunnel has time to start
+          sleep 30  # Ensure loophole has time to start
+
+          ps aux | grep loophole  # Debugging: Check if loophole is running
 
       - name: Keep Alive
         run: |
-          curl https://loca.lt/mytunnelpassword
           echo "Keeping workflow alive for 5 hours 45 minutes..."
           sleep 20700
