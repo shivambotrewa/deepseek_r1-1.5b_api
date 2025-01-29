@@ -37,7 +37,8 @@ jobs:
       - name: Start Ollama
         run: |
           echo "Starting Ollama..."
-          nohup ollama serve > ollama.log 2>&1 &  # Run Ollama in the background
+          # nohup ollama serve > ollama.log 2>&1 &  # Run Ollama in the background
+          ollama serve &
 
           echo "Waiting for Ollama to start..."
           until curl -s http://localhost:11434/api/status | grep -q "running"; do
@@ -52,14 +53,14 @@ jobs:
 
           echo "Waiting for model to download..."
           until curl -s http://localhost:11434/api/models | grep -q "deepseek-r1"; do
-            sleep 10
+            sleep 20
           done
           echo "Model is ready!"
 
       - name: Start LocalTunnel
         run: |
           echo "Starting LocalTunnel..."
-          lt --port 11434 > tunnel_output.txt 2>&1 &
+          sudo lt --port 11434 > tunnel_output.txt 2>&1 &
 
           echo "Waiting for tunnel URL..."
           sleep 10  # Ensure localtunnel has time to start
