@@ -49,19 +49,11 @@ jobs:
       - name: Start LocalTunnel
         run: |
           echo "Starting LocalTunnel..."
-          sudo lt --port 11434 > tunnel_output.txt 2>&1 &
-
+          sudo lt --port 11434 &
+          curl https://loca.lt/mytunnelpassword
+          
           echo "Waiting for tunnel URL..."
           sleep 10  # Ensure localtunnel has time to start
-
-          export TUNNEL_URL=$(grep -o 'https://[a-zA-Z0-9.-]*\.loca.lt' tunnel_output.txt)
-          if [[ -z "$TUNNEL_URL" ]]; then
-            echo "Failed to retrieve LocalTunnel URL" >&2
-            exit 1
-          fi
-
-          echo "TUNNEL_URL=$TUNNEL_URL" >> $GITHUB_ENV
-          echo "Ollama API is available at: $TUNNEL_URL"
 
       - name: Keep Alive
         run: |
