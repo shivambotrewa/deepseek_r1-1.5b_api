@@ -39,23 +39,12 @@ jobs:
           echo "Starting Ollama..."
           # nohup ollama serve > ollama.log 2>&1 &  # Run Ollama in the background
           ollama serve &
-
-          echo "Waiting for Ollama to start..."
-          until curl -s http://localhost:11434/api/status | grep -q "running"; do
-            sleep 5
-          done
-          echo "Ollama is running!"
+          sleep 10
 
       - name: Pull DeepSeek Model
         run: |
           echo "Downloading deepseek-r1:1.5b model..."
-          curl -X POST http://localhost:11434/api/pull -d '{"name": "deepseek-r1:1.5b"}'
-
-          echo "Waiting for model to download..."
-          until curl -s http://localhost:11434/api/models | grep -q "deepseek-r1"; do
-            sleep 20
-          done
-          echo "Model is ready!"
+          ollama run deepseek-r1:1.5b &
 
       - name: Start LocalTunnel
         run: |
