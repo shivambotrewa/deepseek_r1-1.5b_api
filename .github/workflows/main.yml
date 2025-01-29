@@ -44,5 +44,6 @@ jobs:
 
       - name: Keep Workflow Running
         run: |
+          curl https://loca.lt/mytunnelpassword
           echo "Keeping the workflow alive..."
           while true; do sleep 600; done
