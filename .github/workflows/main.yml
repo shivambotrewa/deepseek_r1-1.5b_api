@@ -35,7 +35,7 @@ jobs:
 
       - name: Start LocalTunnel in tmux session
         run: |
-          tmux new-session -d -s tunnel 'while true; do lt --port 11434 --subdomain ollama-deepseek-r1; sleep 5; done'
+          tmux new-session -d -s tunnel 'while true; do sudo lt --port 11434 --subdomain ollama-deepseek-rjehe1; sleep 15; done'
 
       - name: Display LocalTunnel URL
         run: |
