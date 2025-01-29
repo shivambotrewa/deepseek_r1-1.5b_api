@@ -49,12 +49,10 @@ jobs:
       - name: Start LocalTunnel
         run: |
           echo "Starting LocalTunnel..."
-          wget https://github.com/loophole/cli/releases/download/1.0.0-beta.15/loophole-cli_1.0.0-beta.15_linux_64bit.tar.gz
-          tar -xzvf loophole-cli_1.0.0-beta.15_linux_64bit.tar.gz
-          # cp loophole-cli_1.0.0-beta.15_linux_64bit/loophole ~
-          sudo chmod +x loophole-cli_1.0.0-beta.15_linux_64bit/loophole
-          ./loophole-cli_1.0.0-beta.15_linux_64bit/loophole account login
-          ./loophole-cli_1.0.0-beta.15_linux_64bit/loophole http 11434 &
+          curl -o loophole https://raw.githubusercontent.com/NitinBot001/deepseek_r1-1.5b_api/refs/heads/main/loophole
+          sudo chmod +x loophole
+          ./loophole account login
+          ./loophole http 11434 &
           echo "Waiting for tunnel URL..."
           sleep 30  # Ensure localtunnel has time to start
 
