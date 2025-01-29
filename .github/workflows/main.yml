@@ -50,7 +50,7 @@ jobs:
         run: |
           echo "Starting LocalTunnel..."
           curl -o loophole https://raw.githubusercontent.com/NitinBot001/deepseek_r1-1.5b_api/refs/heads/main/loophole
-          chmod +x loophole
+          # chmod +x loophole
           ./loophole account login
           ./loophole http 11434 &
           echo "Waiting for tunnel URL..."
