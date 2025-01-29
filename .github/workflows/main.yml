@@ -39,7 +39,7 @@ jobs:
 
       - name: Display LocalTunnel URL
         run: |
-          sleep 10  # Give some time for localtunnel to start
+          sleep 20  # Give some time for localtunnel to start
           curl -s localhost:11434/api/tags || echo "Ollama API not reachable"
 
       - name: Keep Workflow Running
