@@ -65,8 +65,7 @@ jobs:
           which loophole || { echo "Loophole not found in PATH"; exit 1; }
 
           echo "Running Loophole..."
-          sudo /usr/local/bin/loophole account login
-          sleap 30
+          sudo /usr/local/bin/loophole account login &
           sudo /usr/local/bin/loophole http 11434 &
 
           echo "Waiting for tunnel URL..."
