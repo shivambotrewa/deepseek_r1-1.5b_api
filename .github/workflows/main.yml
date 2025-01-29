@@ -26,13 +26,20 @@ jobs:
           curl -fsSL https://ollama.com/install.sh | sh
           echo "Ollama installed successfully!"
 
+      - name: Kill Any Existing Ollama Process
+        run: |
+          if pgrep -x "ollama" > /dev/null; then
+            echo "Ollama is already running. Stopping it..."
+            pkill ollama
+            sleep 5
+          fi
+
       - name: Start Ollama
         run: |
           echo "Starting Ollama..."
-          ollama serve &  # Run in background
-          sleep 10  # Give it time to start
+          nohup ollama serve > ollama.log 2>&1 &  # Run Ollama in the background
 
-          echo "Checking if Ollama is running..."
+          echo "Waiting for Ollama to start..."
           until curl -s http://localhost:11434/api/status | grep -q "running"; do
             sleep 5
           done
