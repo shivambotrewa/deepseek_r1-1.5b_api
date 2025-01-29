@@ -30,7 +30,7 @@ jobs:
         run: |
           if pgrep -x "ollama" > /dev/null; then
             echo "Ollama is already running. Stopping it..."
-            pkill ollama
+            sudo pkill -9 ollama || true  # Force kill if needed, ignore errors
             sleep 5
           fi
 
