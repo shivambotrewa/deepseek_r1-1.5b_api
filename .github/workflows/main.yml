@@ -8,53 +8,63 @@ on:
 jobs:
   run-ollama:
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-      
+
       - name: Install Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-      
-      - name: Install LocalTunnel
+
+      - name: Install localtunnel
         run: sudo npm install -g localtunnel
-      
+
       - name: Install Docker
         uses: docker-practice/actions-setup-docker@v1
-      
+
       - name: Pull and Run Ollama
         run: |
-          sudo docker pull ollama/ollama:latest
-          sudo docker run -d -p 11434:11434 --name ollama ollama/ollama
-          sleep 30  # Wait for Ollama to start
-      
-      - name: Pull Deepseek Model
+          docker pull ollama/ollama:latest
+          docker run -d -p 11434:11434 --name ollama ollama/ollama
+
+          echo "Waiting for Ollama to start..."
+          until curl -s http://localhost:11434/api/status | grep -q "running"; do
+            sleep 5
+          done
+          echo "Ollama is running!"
+
+      - name: Pull DeepSeek Model
         run: |
+          echo "Downloading deepseek-r1:1.5b model..."
           curl -X POST http://localhost:11434/api/pull -d '{"name": "deepseek-r1:1.5b"}'
-          sleep 60  # Wait for model to download
-      
-      - name: Start LocalTunnel and Capture URL
+
+          echo "Waiting for model to download..."
+          until curl -s http://localhost:11434/api/models | grep -q "deepseek-r1"; do
+            sleep 10
+          done
+          echo "Model is ready!"
+
+      - name: Start LocalTunnel
         run: |
-          nohup lt --port 11434 > lt_output.txt 2>&1 &
-          sleep 15  # Give LocalTunnel time to initialize
-          
-          # Extract LocalTunnel URL dynamically
-          TUNNEL_URL=$(grep -o 'https://[a-zA-Z0-9.-]*\.loca\.lt' lt_output.txt | head -n 1)
-          if [ -z "$TUNNEL_URL" ]; then
-            echo "LocalTunnel failed to start."
+          echo "Starting LocalTunnel..."
+          sudo lt --port 11434 > tunnel_output.txt 2>&1 &
+
+          echo "Waiting for tunnel URL..."
+          sleep 10  # Ensure localtunnel has time to start
+
+          export TUNNEL_URL=$(grep -o 'https://[a-zA-Z0-9.-]*\.loca.lt' tunnel_output.txt)
+          if [[ -z "$TUNNEL_URL" ]]; then
+            echo "Failed to retrieve LocalTunnel URL" >&2
             exit 1
           fi
-          
+
           echo "TUNNEL_URL=$TUNNEL_URL" >> $GITHUB_ENV
-      
-      - name: Display Tunnel URL
-        run: |
-          curl https://loca.lt/mytunnelpassword
-          echo "Ollama API is available at: ${{ env.TUNNEL_URL }}"
-          
+          echo "Ollama API is available at: $TUNNEL_URL"
+
       - name: Keep Alive
         run: |
-          # Keep the action running for 5 hours 45 minutes (just under the 6-hour schedule)
+          curl https://loca.lt/mytunnelpassword
+          echo "Keeping workflow alive for 5 hours 45 minutes..."
           sleep 20700
