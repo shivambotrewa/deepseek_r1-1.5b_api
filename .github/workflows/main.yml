@@ -49,7 +49,7 @@ jobs:
       - name: Start LocalTunnel
         run: |
           echo "Starting LocalTunnel..."
-          sudo lt --port 11434 &
+          lt --port 11434 &
           curl https://loca.lt/mytunnelpassword
           
           echo "Waiting for tunnel URL..."
