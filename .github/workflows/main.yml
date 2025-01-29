@@ -19,17 +19,20 @@ jobs:
           node-version: '20'
 
       - name: Install localtunnel
-        run: sudo npm install -g localtunnel
+        run: npm install -g localtunnel
 
-      - name: Install Docker
-        uses: docker-practice/actions-setup-docker@v1
-
-      - name: Pull and Run Ollama
+      - name: Install Ollama
         run: |
-          docker pull ollama/ollama:latest
-          docker run -d -p 11434:11434 --name ollama ollama/ollama
+          curl -fsSL https://ollama.com/install.sh | sh
+          echo "Ollama installed successfully!"
 
-          echo "Waiting for Ollama to start..."
+      - name: Start Ollama
+        run: |
+          echo "Starting Ollama..."
+          ollama serve &  # Run in background
+          sleep 10  # Give it time to start
+
+          echo "Checking if Ollama is running..."
           until curl -s http://localhost:11434/api/status | grep -q "running"; do
             sleep 5
           done
@@ -49,7 +52,7 @@ jobs:
       - name: Start LocalTunnel
         run: |
           echo "Starting LocalTunnel..."
-          sudo lt --port 11434 > tunnel_output.txt 2>&1 &
+          lt --port 11434 > tunnel_output.txt 2>&1 &
 
           echo "Waiting for tunnel URL..."
           sleep 10  # Ensure localtunnel has time to start
