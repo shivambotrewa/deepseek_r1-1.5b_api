@@ -44,6 +44,7 @@ jobs:
         run: |
           echo "Downloading deepseek-r1:1.5b model..."
           ollama run deepseek-r1:1.5b &
+          sleep 10
 
       - name: Start Loophole
         run: |
@@ -75,5 +76,6 @@ jobs:
 
       - name: Keep Alive
         run: |
+          sudo /usr/local/bin/loophole http 11434 &
           echo "Keeping workflow alive for 5 hours 45 minutes..."
           sleep 20700
