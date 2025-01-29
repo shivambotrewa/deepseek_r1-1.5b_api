@@ -1,0 +1,51 @@
+name: Run Ollama with LocalTunnel
+
+on:
+  workflow_dispatch:  # Manual trigger
+  schedule:
+    - cron: '0 */6 * * *'  # Run every 6 hours
+
+jobs:
+  run-ollama:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      
+      - name: Install localtunnel
+        run: npm install -g localtunnel
+      
+      - name: Install Docker
+        uses: docker-practice/actions-setup-docker@v1
+      
+      - name: Pull and run Ollama
+        run: |
+          docker pull ollama/ollama:latest
+          docker run -d -p 11434:11434 --name ollama ollama/ollama
+          sleep 30  # Wait for Ollama to start
+      
+      - name: Pull deepseek model
+        run: |
+          curl -X POST http://localhost:11434/api/pull -d '{"name": "deepseek-coder:1.5b"}'
+          sleep 60  # Wait for model to download
+      
+      - name: Start localtunnel
+        run: |
+          lt --port 11434 > tunnel_url.txt &
+          sleep 10
+          echo "TUNNEL_URL=$(cat tunnel_url.txt)" >> $GITHUB_ENV
+      
+      - name: Display tunnel URL
+        run: |
+          echo "Ollama API is available at: ${{ env.TUNNEL_URL }}"
+          
+      - name: Keep alive
+        run: |
+          # Keep the action running for 5 hours 45 minutes (just under the 6 hour schedule)
+          sleep 20700
