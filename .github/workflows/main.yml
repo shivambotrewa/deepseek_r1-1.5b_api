@@ -31,7 +31,7 @@ jobs:
         run: sleep 10
 
       - name: Install LocalTunnel
-        run: npm install -g localtunnel
+        run: sudo npm install -g localtunnel
 
       - name: Start LocalTunnel in tmux session
         run: |
