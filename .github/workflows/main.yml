@@ -14,18 +14,19 @@ jobs:
 
       - name: Install Ollama
         run: |
-          curl -fsSL https://ollama.com/install.sh | sh
-          echo "$HOME/.ollama/bin" >> $GITHUB_PATH
+          curl -fsSL https://ollama.com/install.sh | sudo sh
+          echo "$HOME/.ollama/bin" | sudo tee -a /etc/profile
+          sudo chmod +x /usr/local/bin/ollama
 
       - name: Verify Ollama installation
-        run: ollama --version
+        run: sudo ollama --version
 
       - name: Pull Deepseek-R1 model
-        run: ollama pull deepseek-r1:1.5b
+        run: sudo ollama pull deepseek-r1:1.5b
 
       - name: Start Ollama server
         run: |
-          nohup ollama serve > ollama.log 2>&1 &
+          sudo nohup ollama serve > /var/log/ollama.log 2>&1 &
 
       - name: Wait for Ollama to start
         run: sleep 10
@@ -33,17 +34,15 @@ jobs:
       - name: Install LocalTunnel
         run: sudo npm install -g localtunnel
 
-      - name: Start LocalTunnel in tmux session
+      - name: Start LocalTunnel and Capture URL
         run: |
-          tmux new-session -d -s tunnel 'while true; do sudo lt --port 11434 --subdomain ollama-deepseek-rjehe1; sleep 15; done'
+          sudo nohup lt --port 11434 > /var/log/lt.log 2>&1 &
+          sleep 10  # Give LocalTunnel time to initialize
+          sudo cat /var/log/lt.log | grep -o 'https://[a-zA-Z0-9.-]*\.loca\.lt' | sudo tee /var/log/lt_url.txt || echo "LocalTunnel failed"
 
       - name: Display LocalTunnel URL
-        run: |
-          sleep 20  # Give some time for localtunnel to start
-          curl -s localhost:11434/api/tags || echo "Ollama API not reachable"
+        run: sudo cat /var/log/lt_url.txt
 
       - name: Keep Workflow Running
         run: |
-          curl https://loca.lt/mytunnelpassword
-          echo "Keeping the workflow alive..."
           while true; do sleep 600; done
