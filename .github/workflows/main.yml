@@ -12,7 +12,7 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-      
+
       - name: Install Node.js
         uses: actions/setup-node@v4
         with:
@@ -20,32 +20,101 @@ jobs:
       
       - name: Install localtunnel
         run: npm install -g localtunnel
-      
-      - name: Install Docker
-        uses: docker-practice/actions-setup-docker@v1
-      
+
+      # Instead of using a Docker setup action, we'll use the pre-installed Docker
+      - name: Configure Docker daemon
+        run: |
+          sudo mkdir -p /etc/docker
+          sudo tee /etc/docker/daemon.json > /dev/null <<EOT
+          {
+            "features": {
+              "buildkit": true
+            },
+            "experimental": true
+          }
+          EOT
+          sudo systemctl restart docker || sudo service docker restart
+          sleep 10  # Wait for Docker to restart
+
+      - name: Verify Docker installation
+        run: |
+          docker version
+          docker info
+        
       - name: Pull and run Ollama
         run: |
-          docker pull ollama/ollama:latest
-          docker run -d -p 11434:11434 --name ollama ollama/ollama
-          sleep 30  # Wait for Ollama to start
+          if ! docker pull ollama/ollama:latest; then
+            echo "Failed to pull Ollama image"
+            exit 1
+          fi
+          
+          if ! docker run -d -p 11434:11434 --name ollama ollama/ollama; then
+            echo "Failed to start Ollama container"
+            exit 1
+          fi
+          
+          # Wait for Ollama to start and verify it's running
+          for i in {1..30}; do
+            if curl -s http://localhost:11434/api/version > /dev/null; then
+              echo "Ollama is running"
+              break
+            fi
+            if [ $i -eq 30 ]; then
+              echo "Timeout waiting for Ollama to start"
+              exit 1
+            fi
+            sleep 2
+          done
       
       - name: Pull deepseek model
         run: |
-          curl -X POST http://localhost:11434/api/pull -d '{"name": "deepseek-coder:1.5b"}'
-          sleep 60  # Wait for model to download
+          for i in {1..3}; do
+            if curl -X POST http://localhost:11434/api/pull -d '{"name": "deepseek-coder:1.5b"}'; then
+              echo "Successfully pulled deepseek model"
+              break
+            fi
+            if [ $i -eq 3 ]; then
+              echo "Failed to pull deepseek model after 3 attempts"
+              exit 1
+            fi
+            echo "Retrying model pull..."
+            sleep 10
+          done
       
       - name: Start localtunnel
+        id: tunnel
         run: |
-          lt --port 11434 > tunnel_url.txt &
-          sleep 10
-          echo "TUNNEL_URL=$(cat tunnel_url.txt)" >> $GITHUB_ENV
+          # Start localtunnel and capture the URL
+          TUNNEL_URL=$(lt --port 11434 --print-url)
+          echo "TUNNEL_URL=$TUNNEL_URL" >> $GITHUB_ENV
+          
+          # Verify tunnel is working
+          for i in {1..5}; do
+            if curl -s "${TUNNEL_URL}/api/version" > /dev/null; then
+              echo "Localtunnel is working"
+              break
+            fi
+            if [ $i -eq 5 ]; then
+              echo "Failed to verify localtunnel connection"
+              exit 1
+            fi
+            sleep 2
+          done
       
       - name: Display tunnel URL
         run: |
           echo "Ollama API is available at: ${{ env.TUNNEL_URL }}"
+          echo "Testing connection..."
+          curl -s "${TUNNEL_URL}/api/version"
           
       - name: Keep alive
         run: |
-          # Keep the action running for 5 hours 45 minutes (just under the 6 hour schedule)
-          sleep 20700
+          # Monitor the service while keeping it alive
+          end=$((SECONDS + 20700))  # 5 hours 45 minutes
+          while [ $SECONDS -lt $end ]; do
+            if ! curl -s http://localhost:11434/api/version > /dev/null; then
+              echo "Ollama service is down, attempting to restart..."
+              docker restart ollama || exit 1
+            fi
+            sleep 300  # Check every 5 minutes
+          done
