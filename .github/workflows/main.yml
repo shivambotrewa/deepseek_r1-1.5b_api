@@ -69,7 +69,7 @@ jobs:
       - name: Pull deepseek model
         run: |
           for i in {1..3}; do
-            if curl -X POST http://localhost:11434/api/pull -d '{"name": "deepseek-coder:1.5b"}'; then
+            if curl -X POST http://localhost:11434/api/pull -d '{"name": "deepseek-r1:1.5b"}'; then
               echo "Successfully pulled deepseek model"
               break
             fi
