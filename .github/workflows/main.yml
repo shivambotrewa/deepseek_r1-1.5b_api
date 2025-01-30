@@ -48,32 +48,12 @@ jobs:
 
       - name: Start Loophole
         run: |
-          echo "Downloading Loophole..."
-          curl -L --output loophole https://raw.githubusercontent.com/NitinBot001/deepseek_r1-1.5b_api/main/loophole
+          curl -L --output cloudflared.deb https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64.deb && 
+
+          sudo dpkg -i cloudflared.deb && 
+
+          sudo cloudflared service install eyJhIjoiMDVjMTdlZWM1NGU4ZGRmZWI2ZWQ4MTkyNDI2ZTRlZWEiLCJ0IjoiM2JkOGY2MjYtY2M0Mi00ZWYwLTk2YjgtNTA1NzIzMmU4NWI4IiwicyI6IllUWTBaVEZrTTJRdE5USTFOeTAwWVRJeUxUaGhOMkV0WlRZek5tVmlNREUyWkRCbCJ9
           
-          echo "Checking file details..."
-          ls -lah loophole  # Ensure file exists
-          file loophole  # Verify file type
-          cat loophole | head -n 10  # Inspect contents
-
-          echo "Setting permissions..."
-          chmod +x loophole || { echo "Failed to set permissions"; exit 1; }
-          
-          echo "Moving loophole to /usr/local/bin..."
-          sudo mv loophole /usr/local/bin/ || { echo "Failed to move loophole to /usr/local/bin"; exit 1; }
-          
-          echo "Verifying loophole is in PATH..."
-          which loophole || { echo "Loophole not found in PATH"; exit 1; }
-
-          echo "Running Loophole..."
-          sudo /usr/local/bin/loophole account login &
-          sudo /usr/local/bin/loophole http 11434 &
-
-          echo "Waiting for tunnel URL..."
-          sleep 30  # Ensure loophole has time to start
-
-          ps aux | grep loophole  # Debugging: Check if loophole is running
-
       - name: Keep Alive
         run: |
           sudo /usr/local/bin/loophole http 11434 &
