@@ -46,15 +46,16 @@ jobs:
           ollama run deepseek-r1:1.5b & 
           sleep 10 
  
-      - name: Start and Monitor Tunnel
+      - name: Keep Alive with Periodic SSH Tunnel Refresh
         run: |
+          # Define the function within the same shell scope
           start_new_tunnel() {
             echo "Setting up SSH configuration..."
             mkdir -p ~/.ssh
             echo -e "Host a.pinggy.io\n\tStrictHostKeyChecking no\n\tUserKnownHostsFile=/dev/null\n" >> ~/.ssh/config
             
             echo "Starting SSH tunnel..."
-            # Capture the SSH output to a temporary file
+            # Capture the SSH output to a file
             ssh -p 443 -R0:localhost:11434 qr@a.pinggy.io "u:Host:localhost:11434" > tunnel_output.txt 2>&1 &
             
             sleep 10
@@ -67,7 +68,7 @@ jobs:
               # Send the URL to your webserver (replace YOUR_WEBSERVER_URL with actual URL)
               curl -X POST -H "Content-Type: application/json" \
                 -d "{\"tunnel_url\": \"$TUNNEL_URL\"}" \
-                https://rnwod-49-35-193-236.a.free.pinggy.link/update_tunnel
+                http://rnwod-49-35-193-236.a.free.pinggy.link/update_tunnel
               
               echo "URL sent to webserver successfully!"
             else
@@ -76,15 +77,8 @@ jobs:
             
             echo "SSH tunnel started successfully!"
           }
- 
-      - name: Verify Tunnel 
-        run: | 
-          echo "Checking tunnel status..." 
-          curl -I https://a.pinggy.io || echo "Tunnel might not be active!" 
-          curl https://ipv4.icanhazip.com/ 
- 
-      - name: Keep Alive with Periodic SSH Tunnel Refresh
-        run: |
+
+          # Main loop
           end_time=$((SECONDS + 20700))  # 5 hours and 45 minutes in seconds
           interval=$((60 * 60))  # 60 minutes in seconds
           
@@ -100,3 +94,9 @@ jobs:
             sleep_time=$((interval < remaining_time ? interval : remaining_time))
             sleep $sleep_time
           done
+
+      - name: Verify Tunnel 
+        run: | 
+          echo "Checking tunnel status..." 
+          curl -I https://a.pinggy.io || echo "Tunnel might not be active!" 
+          curl https://ipv4.icanhazip.com/
