@@ -48,12 +48,8 @@ jobs:
 
       - name: Start Loophole
         run: |
-          curl -L --output cloudflared.deb https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64.deb
-
-          sudo dpkg -i cloudflared.deb 
-
-          sudo cloudflared service install eyJhIjoiMDVjMTdlZWM1NGU4ZGRmZWI2ZWQ4MTkyNDI2ZTRlZWEiLCJ0IjoiM2JkOGY2MjYtY2M0Mi00ZWYwLTk2YjgtNTA1NzIzMmU4NWI4IiwicyI6IllUWTBaVEZrTTJRdE5USTFOeTAwWVRJeUxUaGhOMkV0WlRZek5tVmlNREUyWkRCbCJ9 &
-          
+          curl -fsSL https://tailscale.com/install.sh | sh && sudo tailscale up --auth-key=tskey-auth-kNTs3gFZmm11CNTRL-JGZmVotnzT2yZLmPAnAvT2Y5tpGbr2pk
+                    
       - name: Keep Alive
         run: |
           sudo /usr/local/bin/loophole http 11434 &
