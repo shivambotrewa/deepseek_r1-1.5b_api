@@ -37,7 +37,7 @@ jobs:
       - name: Start Ollama
         run: |
           echo "Starting Ollama..."
-          nohup ollama serve > ollama.log 2>&1 &  # Run Ollama in the background
+          ollama serve & npx localtunnel -p 11434 &  # Run Ollama in the background
           sleep 10
 
       - name: Pull DeepSeek Model
@@ -48,10 +48,10 @@ jobs:
 
       - name: Start Loophole
         run: |
-          sudo npm install localtunnel
-          sleep 10
-          sudo npx localtunnel --port 11434 -h "http://localtunnel.me" -s api-deepseekr1 &
-          sleep 15
+          # sudo npm install localtunnel
+          
+          # sudo npx localtunnel --port 11434 -h "http://localtunnel.me" -s api-deepseekr1 &
+          
           curl https://loca.lt/mytunnelpassword
           
           
@@ -60,5 +60,6 @@ jobs:
         run: |
           # sudo /usr/local/bin/loophole http 11434 &
           curl https://loca.lt/mytunnelpassword
+          curl https://ipv4.icanhazip.com/
           echo "Keeping workflow alive for 5 hours 45 minutes..."
           sleep 20700
