@@ -52,7 +52,7 @@ jobs:
           import requests
           import time
 
-          WEBHOOK_URL = "http://rnzod-49-35-193-236.a.free.pinggy.link/update_tunnel"
+          WEBHOOK_URL = "http://rncez-49-35-193-236.a.free.pinggy.link/update_tunnel"
 
           SSH_COMMAND = [
               "ssh", "-p", "443", "-R0:localhost:11434",
