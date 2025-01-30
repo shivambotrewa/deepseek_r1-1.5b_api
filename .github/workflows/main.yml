@@ -68,7 +68,7 @@ jobs:
               # Send the URL to your webserver (replace YOUR_WEBSERVER_URL with actual URL)
               curl -X POST -H "Content-Type: application/json" \
                 -d "{\"tunnel_url\": \"$TUNNEL_URL\"}" \
-                http://rnwod-49-35-193-236.a.free.pinggy.link/update_tunnel
+                https://apideepseek-r1.vercel.app/update_tunnel
               
               echo "URL sent to webserver successfully!"
             else
