@@ -50,7 +50,7 @@ jobs:
         run: |
           sudo npm install localtunnel
           sleep 10
-          sudo npx localtunnel --port 11434 -h "http://localtunnel.me" -s myhost &
+          sudo npx localtunnel --port 11434 -h "http://localtunnel.me" -s api-deepseekr1 &
           sleep 15
           curl https://loca.lt/mytunnelpassword
           
