@@ -49,7 +49,9 @@ jobs:
       - name: Start Loophole
         run: |
           sudo npm install localtunnel
+          sleep 10
           sudo lt --port 11434 -h "http://localtunnel.me" -s myhost &
+          sleep 15
           curl https://loca.lt/mytunnelpassword
           
           
