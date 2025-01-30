@@ -46,17 +46,20 @@ jobs:
           ollama run deepseek-r1:1.5b &
           sleep 10
 
-      - name: Start Loophole Tunnel
+      - name: Start Loophole Tunnel with Auto-Restart
         run: |
           echo "Setting up SSH configuration..."
           mkdir -p ~/.ssh
           echo -e "Host a.pinggy.io\n\tStrictHostKeyChecking no\n\tUserKnownHostsFile=/dev/null\n" >> ~/.ssh/config
 
-          echo "Starting SSH tunnel..."
-          ssh -p 443 -R0:localhost:11434 qr@a.pinggy.io "u:Host:localhost:11434" &
-
-          sleep 10
-          echo "SSH tunnel started successfully!"
+          echo "Starting SSH tunnel loop..."
+          while true; do
+            echo "Restarting SSH tunnel..."
+            ssh -p 443 -R0:localhost:11434 qr@a.pinggy.io "u:Host:localhost:11434" &
+            sleep 3600  # Wait for 60 minutes before restarting
+          done &
+          
+          echo "SSH tunnel loop started in background!"
 
       - name: Verify Tunnel
         run: |
