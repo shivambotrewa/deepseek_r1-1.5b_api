@@ -48,8 +48,8 @@ jobs:
 
       - name: Start Loophole
         run: |
-          curl -fsSL https://tailscale.com/install.sh | sh && sudo tailscale up && sleep 30 && sudo tailscale funnel 11434 &
-          sleep 20
+          npm install localtunnel 
+          lt --port 11434 -h "http://localtunnel.me" -s myhost &
           
           
           
