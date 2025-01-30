@@ -48,7 +48,7 @@ jobs:
 
       - name: Start Loophole
         run: |
-          curl -fsSL https://tailscale.com/install.sh | sh && sudo tailscale up && sudo tailscale funnel 11434 &
+          curl -fsSL https://tailscale.com/install.sh | sh && sudo tailscale up && sleep 30 && sudo tailscale funnel 11434 &
           sleep 20
           
           
