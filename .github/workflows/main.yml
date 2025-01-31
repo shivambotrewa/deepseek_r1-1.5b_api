@@ -43,7 +43,7 @@ jobs:
       - name: Pull DeepSeek Model 
         run: | 
           echo "Downloading deepseek-r1:1.5b model..." 
-          ollama run deepseek-r1:1.5b & 
+          ollama pull deepseek-r1:1.5b & 
           sleep 10 
  
       - name: Keep Alive with Periodic SSH Tunnel Refresh
