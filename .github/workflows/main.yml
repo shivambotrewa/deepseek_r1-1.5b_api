@@ -60,7 +60,7 @@ jobs:
             pkill -f "ssh -p 443 -R0:localhost:11434" || true
             
             # Capture the SSH output to a file
-            ssh -p 443 -R0:localhost:11434 qr@a.pinggy.io "u:Host:localhost:11434" > tunnel_output.txt 2>&1 &
+            ssh -p 443 -R0:localhost:11434 -o StrictHostKeyChecking=no qr@a.pinggy.io "u:Host:localhost:11434" > tunnel_output.txt 2>&1 &
             
             sleep 10
             
