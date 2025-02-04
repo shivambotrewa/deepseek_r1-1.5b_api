@@ -7,7 +7,8 @@ on:
  
 jobs: 
   run-ollama: 
-    runs-on: ubuntu-latest 
+    runs-on: ubuntu-latest
+    timeout-minutes: 330  # 5.5 hours max runtime (just under GitHub's 6-hour limit)
  
     steps: 
       - name: Checkout repository 
@@ -19,7 +20,7 @@ jobs:
           node-version: '20' 
  
       - name: Install dependencies 
-        run: sudo apt update && sudo apt install -y wget curl openssh-client 
+        run: sudo apt update && sudo apt install -y wget curl openssh-client jq
  
       - name: Install Ollama 
         run: | 
@@ -55,6 +56,9 @@ jobs:
             echo -e "Host a.pinggy.io\n\tStrictHostKeyChecking no\n\tUserKnownHostsFile=/dev/null\n" >> ~/.ssh/config
             
             echo "Starting SSH tunnel..."
+            # Kill any existing SSH processes
+            pkill -f "ssh -p 443 -R0:localhost:11434" || true
+            
             # Capture the SSH output to a file
             ssh -p 443 -R0:localhost:11434 qr@a.pinggy.io "u:Host:localhost:11434" > tunnel_output.txt 2>&1 &
             
@@ -65,38 +69,81 @@ jobs:
             
             if [ ! -z "$TUNNEL_URL" ]; then
               echo "Tunnel URL found: $TUNNEL_URL"
-              # Send the URL to your webserver (replace YOUR_WEBSERVER_URL with actual URL)
+              # Send the URL to your webserver
               curl -X POST -H "Content-Type: application/json" \
                 -d "{\"tunnel_url\": \"$TUNNEL_URL\"}" \
-                https://apideepseek-r1.vercel.app/update_tunnel
+                https://apideepseekr1-7b.vercel.app/update_tunnel
+
+              sleep 10
+              # Verify if the posted URL matches
+              MAX_RETRIES=5
+              RETRY_COUNT=0
+              MATCH_FOUND=false
               
-              echo "URL sent to webserver successfully!"
+              while [ $RETRY_COUNT -lt $MAX_RETRIES ] && [ "$MATCH_FOUND" = false ]; do
+                sleep 10  # Wait before checking
+                API_RESPONSE=$(curl -s https://apideepseekr1-7b.vercel.app/status)
+                POSTED_URL=$(echo "$API_RESPONSE" | jq -r '.current_url')
+                IS_URL_VALID=$(echo "$API_RESPONSE" | jq -r '.is_url_valid')
+                
+                echo "Checking posted URL: $POSTED_URL"
+                echo "URL validity: $IS_URL_VALID"
+                echo "Against tunnel URL: $TUNNEL_URL"
+                
+                if [ "$POSTED_URL" = "$TUNNEL_URL" ] && [ "$IS_URL_VALID" = "true" ]; then
+                  echo "URL verification successful! URLs match and URL is valid."
+                  MATCH_FOUND=true
+                else
+                  echo "URLs don't match or URL is not valid. Retrying POST request..."
+                  curl -X POST -H "Content-Type: application/json" \
+                    -d "{\"tunnel_url\": \"$TUNNEL_URL\"}" \
+                    https://apideepseekr1-7b.vercel.app/update_tunnel
+                  RETRY_COUNT=$((RETRY_COUNT + 1))
+                fi
+              done
+              
+              if [ "$MATCH_FOUND" = false ]; then
+                echo "Failed to verify URL match after $MAX_RETRIES attempts"
+                return 1
+              fi
             else
               echo "Failed to extract tunnel URL"
+              return 1
             fi
             
-            echo "SSH tunnel started successfully!"
+            echo "SSH tunnel started and verified successfully!"
           }
 
-          # Main loop
-          end_time=$((SECONDS + 20700))  # 5 hours and 45 minutes in seconds
-          interval=$((60 * 60))  # 60 minutes in seconds
-          
-          while [ $SECONDS -lt $end_time ]; do
-            # Kill existing SSH tunnel
-            pkill -f "ssh -p 443 -R0:localhost:11434" || true
+          # Calculate end time (5 hours from now to allow for cleanup)
+          END_TIME=$(($(date +%s) + 18000))  # 5 hours in seconds
+          REFRESH_INTERVAL=3600  # 60 minutes in seconds
+          LAST_REFRESH=$(date +%s)
+
+          # Start tunnel initially
+          start_new_tunnel
+
+          # Main loop to keep the tunnel alive and refresh periodically
+          while [ $(date +%s) -lt $END_TIME ]; do
+            CURRENT_TIME=$(date +%s)
             
-            # Start new SSH tunnel and post URL
-            start_new_tunnel
+            # Check if it's time for a refresh
+            if [ $((CURRENT_TIME - LAST_REFRESH)) -ge $REFRESH_INTERVAL ]; then
+              echo "Time to refresh the tunnel..."
+              start_new_tunnel
+              LAST_REFRESH=$CURRENT_TIME
+            fi
             
-            # Sleep for the interval (60 minutes) or until we reach the end time
-            remaining_time=$((end_time - SECONDS))
-            sleep_time=$((interval < remaining_time ? interval : remaining_time))
-            sleep $sleep_time
+            # Check if Ollama is still running
+            if ! pgrep -x "ollama" > /dev/null; then
+              echo "Ollama process not found, restarting..."
+              nohup ollama serve > ollama.log 2>&1 &
+              sleep 10
+            fi
+            
+            # Sleep for a minute before next check
+            sleep 60
           done
 
-      - name: Verify Tunnel 
-        run: | 
-          echo "Checking tunnel status..." 
-          curl -I https://a.pinggy.io || echo "Tunnel might not be active!" 
-          curl https://ipv4.icanhazip.com/
+          echo "Reached maximum runtime, shutting down..."
+          pkill -f "ssh -p 443 -R0:localhost:11434" || true
+          pkill -x "ollama" || true
