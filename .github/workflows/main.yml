@@ -98,6 +98,7 @@ jobs:
                   curl -X POST -H "Content-Type: application/json" \
                     -d "{\"tunnel_url\": \"$TUNNEL_URL\"}" \
                     https://apideepseekr1-7b.vercel.app/update_tunnel
+                    sleep 10
                   RETRY_COUNT=$((RETRY_COUNT + 1))
                 fi
               done
